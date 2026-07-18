@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  fastapi:
+    build: ./fast-api-App
+    container_name: fastapi_service
+    ports:
+      - "8003:8000"
+    depends_on:
+      - mongodb
+
+  streamlit:
+    build: ./WebApp
+    container_name: streamlit_service
+    ports:
+      - "8507:8501"
+    depends_on:
+      - fastapi
+
+  mongodb:
+    image: mongo:6.0
+    container_name: mongo_service
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo_express
+    restart: always
+    ports:
+      - "8089:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo_service
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+    depends_on:
+      - mongodb
+
+volumes:
+  mongo_data:
+
+
+
+

@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: streamlit-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: streamlit
+  template:
+    metadata:
+      labels:
+        app: streamlit
+    spec:
+      containers:
+      - name: streamlit
+        image: streamlit_image:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8501
+        env:
+        - name: API_URL
+          value: "http://fastapi-service:8000/analyze"
+        - name: IN_K8S
+          value: "true"
+        command: ["streamlit"]
+        args: ["run", "app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: streamlit-service
+spec:
+  selector:
+    app: streamlit
+  ports:
+  - protocol: TCP
+    port: 8501
+    targetPort: 8501
+  type: NodePort

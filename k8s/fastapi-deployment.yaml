@@ -1,0 +1,39 @@
+apiVersion: apps/v1                 # Version de l’API Kubernetes pour les déploiements
+kind: Deployment                    # Type de ressource : Deployment = gérer un ensemble de pods
+metadata:
+  name: fastapi-deployment          # Nom du déploiement dans Kubernetes
+spec:
+  replicas: 3                       # Nombre de pods à lancer pour ce déploiement
+  selector:
+    matchLabels:
+      app: fastapi                  # Permet à Kubernetes de savoir quels pods font partie de ce déploiement
+  template:                         # Modèle pour créer les pods
+    metadata:
+      labels:
+        app: fastapi                # Label du pod (doit matcher le selector ci-dessus)
+    spec:
+      containers:
+      - name: fastapi               # Nom du conteneur dans le pod
+        image: fastapi_image:latest # Image Docker à utiliser (à construire localement)
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8000       # Port exposé à l’intérieur du pod
+        env:
+        - name: MONGO_URL           # Variable d’environnement pour que FastAPI sache où est MongoDB
+          value: "mongodb://mongo-service:27017/"
+        command: ["uvicorn"]
+        args: ["main:app", "--host", "0.0.0.0", "--port", "8000"]
+---
+apiVersion: v1                       # Version de l’API pour les Services
+kind: Service                        # Ressource Service = permet d’exposer un pod
+metadata:
+  name: fastapi-service              # Nom du service
+spec:
+  selector:
+    app: fastapi                     # Sélectionne les pods avec ce label
+  ports:
+  - protocol: TCP
+    port: 8000                       # Port interne du service
+    targetPort: 8000                 # Port sur lequel le pod écoute
+    nodePort: 30081   # Nouveau port externe pour accéder depuis ta machine locale
+  type: LoadBalancer                   # ClusterIP = service interne au cluster (non accessible de l’extérieur)
